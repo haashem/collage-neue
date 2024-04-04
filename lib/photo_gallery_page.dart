@@ -17,13 +17,15 @@ class PhotoGalleryPage extends StatefulWidget {
 class _PhotoGalleryPageState extends State<PhotoGalleryPage> {
   late final model = widget.model;
 
-  @override
+    @override
   void initState() {
     super.initState();
+    model.bindPhotoPicker();
   }
 
   @override
   void dispose() {
+    model.unbindPhotoPicker();
     super.dispose();
   }
 
