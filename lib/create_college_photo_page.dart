@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:collage_neue/collage_neue_model.dart';
@@ -33,15 +34,33 @@ class _CreateCollegePhotoPageState extends State<CreateCollegePhotoPage> {
   void initState() {
     super.initState();
     model.bindMainView();
-
     model.photosCount.addListener(() {
       updateUI(model.photosCount.value);
+    });
+
+     listenToPhotoSaveResult(context, model);
+  }
+
+  StreamSubscription<String>? savedPhotoIdSubscription;
+  void listenToPhotoSaveResult(BuildContext context, CollageNeueModel model) {
+    savedPhotoIdSubscription = model.savedPhotoId.listen((id) {
+      if (!context.mounted) {
+        return;
+      }
+      showAlertDialog(context,
+          title: 'Success', message: 'Photo saved with ID: $id');
+    }, onError: (error) {
+      if (!context.mounted) {
+        return;
+      }
+      showAlertDialog(context, title: 'Error', message: error.toString());
     });
   }
 
   @override
   void dispose() {
     model.dispose();
+    savedPhotoIdSubscription?.cancel();
     super.dispose();
   }
 
