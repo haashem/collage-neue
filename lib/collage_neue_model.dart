@@ -8,6 +8,8 @@ import 'dart:ui' as ui;
 
 import 'package:rxdart/rxdart.dart';
 
+enum CollageNeueModelError { permissionNotGranted }
+
 class CollageNeueModel {
   final previewImage = ValueNotifier<ui.Image?>(null);
   final photosCount = ValueNotifier<int>(0);
@@ -53,9 +55,7 @@ class CollageNeueModel {
       return;
     }
 
-    final subscription = PhotoWriter.save(collegeImage)
-    .asStream()
-    .listen((id) {
+    final subscription = PhotoWriter.save(collegeImage).asStream().listen((id) {
       _savedPhotoIdSubject.add(id);
       clear();
     }, onError: _savedPhotoIdSubject.addError);
@@ -75,12 +75,21 @@ class CollageNeueModel {
   Stream<List<AssetEntity>> get photos => _photos.stream;
 
   void bindPhotoPicker() {
-    loadPhotos().then((items) => _photos.add(items));
+    isPhotoGalleryPermissionGranted().then((isGranted) {
+      if (isGranted) {
+        loadPhotos().then((items) => _photos.add(items));
+      } else {
+        _photos.addError(CollageNeueModelError.permissionNotGranted);
+      }
+    });
   }
 
   void unbindPhotoPicker() {
     selectedPhotosSubject.close();
   }
+
+  Future<bool> isPhotoGalleryPermissionGranted() =>
+      PhotoManager.requestPermissionExtend().then((ps) => ps.hasAccess);
 
   Future<List<AssetEntity>> loadPhotos() async {
     final PermissionState ps = await PhotoManager.requestPermissionExtend();

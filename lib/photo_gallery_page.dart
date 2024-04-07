@@ -17,7 +17,7 @@ class PhotoGalleryPage extends StatefulWidget {
 class _PhotoGalleryPageState extends State<PhotoGalleryPage> {
   late final model = widget.model;
 
-    @override
+  @override
   void initState() {
     super.initState();
     model.bindPhotoPicker();
@@ -29,14 +29,30 @@ class _PhotoGalleryPageState extends State<PhotoGalleryPage> {
     super.dispose();
   }
 
+  void _streamListener(
+      BuildContext context, AsyncSnapshot<List<AssetEntity>> snapshot) {
+    if (snapshot.hasError && snapshot.error != null) {
+      switch (snapshot.error) {
+        case CollageNeueModelError.permissionNotGranted:
+          showAlertDialog(context,
+              title: 'No access to Camera Roll',
+              message: 'You can grant access in Settings app');
+        default:
+          showAlertDialog(context,
+              title: 'Error', message: snapshot.error!.toString());
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Photo Gallery'),
       ),
-      body: StreamBuilder<List<AssetEntity>>(
+      body: StreamListenableBuilder<List<AssetEntity>>(
         stream: model.photos,
+        listener: _streamListener,
         builder: (context, snapshot) {
           return switch (snapshot) {
             (final AsyncSnapshot<List<AssetEntity>> snapshot)
